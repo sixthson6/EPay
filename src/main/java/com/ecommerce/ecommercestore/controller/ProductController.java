@@ -22,7 +22,7 @@ public class ProductController {
         this.productService = productService;
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest productRequest){
         ProductResponse productResponse = productService.createProduct(productRequest);
@@ -46,12 +46,6 @@ public class ProductController {
         List<ProductResponse> products = productService.getAllProducts(pageNo, pageSize, sortBy, sortDir, nameFilter);
         return ResponseEntity.ok(products);
     }
-
-//    @GetMapping("/category/{categoryId}")
-//    public ResponseEntity<List<ProductResponse>> getProductsByCategoryId(@PathVariable("categoryId") Long categoryId){
-//        List<ProductResponse> products = productService.getProductsByCategoryId(categoryId);
-//        return ResponseEntity.ok(products);
-//    }
 
     @GetMapping("/category/{categoryName}")
     public ResponseEntity<List<ProductResponse>> getProductsByCategoryName(@PathVariable("categoryName") String categoryName){
