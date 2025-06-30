@@ -1,11 +1,14 @@
 package com.ecommerce.ecommercestore.config;
 
+import com.ecommerce.ecommercestore.security.CustomUserDetailsService;
+import com.ecommerce.ecommercestore.security.JwtAuthenticationEntryPoint;
+import com.ecommerce.ecommercestore.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // Updated annotation
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -16,22 +19,23 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Updated annotation for method-level security
+@EnableMethodSecurity
 public class SecurityConfig {
 
-    // Removed: private CustomUserDetailsService userDetailsService;
-    // Removed: private JwtAuthenticationEntryPoint authenticationEntryPoint;
-    // Removed: private JwtAuthenticationFilter authenticationFilter;
+    private CustomUserDetailsService userDetailsService;
+    private JwtAuthenticationEntryPoint authenticationEntryPoint;
+    private JwtAuthenticationFilter authenticationFilter;
 
-    // The constructor is updated to remove the parameters that are no longer fields.
-    // If CustomUserDetailsService, JwtAuthenticationEntryPoint, and JwtAuthenticationFilter
-    // are not used/injected anywhere, you can remove this constructor entirely.
-    // For now, keeping it minimal as per the request to only remove the fields.
-    public SecurityConfig() {
+    public SecurityConfig(CustomUserDetailsService userDetailsService,
+                          JwtAuthenticationEntryPoint authenticationEntryPoint,
+                          JwtAuthenticationFilter authenticationFilter) {
+        this.userDetailsService = userDetailsService;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.authenticationFilter = authenticationFilter;
     }
 
     @Bean
-    public static PasswordEncoder passwordEncoder(){
+    public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -43,28 +47,33 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Modern way to disable CSRF
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless sessions for REST API
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // Authentication entry point and filter are removed as per request for a simplified setup
-                .authorizeHttpRequests(authorize -> // Modern way to configure authorization
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                )
+                .authorizeHttpRequests(authorize ->
                         authorize
-                                // Allow all requests to auth endpoints (register, login, refresh)
                                 .requestMatchers("/api/v1/auth/**").permitAll()
-                                // Allow public GET access to product and category endpoints
+                                .requestMatchers("/api/v1/auth/register-admin").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
-                                // Since you mentioned "no security" for products/categories,
-                                // and potentially no other security components are set up,
-                                // we'll permit all other requests for now for simplicity.
-                                // In a real app, you'd secure these.
-                                .anyRequest().permitAll() // Temporarily permit all other requests
+
+                                .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/v1/categories/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/categories/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/v1/categories/**").hasRole("ADMIN")
+
+                                .requestMatchers("/api/v1/users/**").authenticated()
+
+                                .anyRequest().authenticated()
                 );
 
-        // JwtAuthenticationFilter is no longer added if not injected/defined.
-        // If you were to re-introduce JWT, you'd add this back with a proper filter bean.
-        // http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
