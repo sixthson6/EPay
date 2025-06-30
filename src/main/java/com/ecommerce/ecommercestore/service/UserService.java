@@ -7,6 +7,7 @@ import com.ecommerce.ecommercestore.payload.user.UserUpdateRequest;
 public interface UserService {
     User createUser(User user);
     UserResponse getUserById(Long userId);
+    User createAdminUser(User user);
     UserResponse getUserByEmail(String email);
     UserResponse updateUser(Long userId, UserUpdateRequest userUpdateRequest);
     void deleteUser(Long userId);

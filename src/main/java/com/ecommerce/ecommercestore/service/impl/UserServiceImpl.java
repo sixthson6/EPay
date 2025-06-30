@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -32,6 +33,13 @@ public class UserServiceImpl implements UserService {
     public User createUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRoles(Collections.singleton(Role.USER));
+        return userRepository.save(user);
+    }
+
+    @Override
+    public User createAdminUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRoles(Set.of(Role.ADMIN, Role.USER));
         return userRepository.save(user);
     }
 
