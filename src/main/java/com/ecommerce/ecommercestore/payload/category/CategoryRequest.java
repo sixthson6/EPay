@@ -1,14 +1,16 @@
 package com.ecommerce.ecommercestore.payload.category;
 
-import com.ecommerce.ecommercestore.model.enums.CategoryName;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class CategoryRequest {
-    @NotNull(message = "Category name cannot be blank")
-    private CategoryName name;
+    @NotBlank(message = "Category name cannot be blank")
+    private String name;
     private String description;
 }
 

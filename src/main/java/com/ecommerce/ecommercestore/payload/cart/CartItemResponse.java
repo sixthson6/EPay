@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class CartItemResponse {
-    private Long id;
+    private String id;
     private ProductResponse product;
     private Integer quantity;
     private Double subtotal;

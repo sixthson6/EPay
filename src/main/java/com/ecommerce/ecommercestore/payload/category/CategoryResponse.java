@@ -1,11 +1,13 @@
 package com.ecommerce.ecommercestore.payload.category;
 
-import com.ecommerce.ecommercestore.model.enums.CategoryName;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class CategoryResponse {
-    private Long id;
-    private CategoryName name;
+    private String id;
+    private String name;
     private String description;
 }

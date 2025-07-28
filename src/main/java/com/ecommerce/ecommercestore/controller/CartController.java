@@ -25,7 +25,7 @@ public class CartController {
         this.userService = userService;
     }
 
-    private Long getCurrentAuthenticatedUserId() {
+    private String getCurrentAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         return userService.getUserByEmail(email).getId();
@@ -34,7 +34,7 @@ public class CartController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CartResponse> getCart(){
-        Long userId = getCurrentAuthenticatedUserId();
+        String userId = getCurrentAuthenticatedUserId();
         CartResponse cartResponse = cartService.mapToDTO(cartService.getCartByUser(userId));
         return ResponseEntity.ok(cartResponse);
     }
@@ -42,7 +42,7 @@ public class CartController {
     @PostMapping("/add")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CartResponse> addProductToCart(@Valid @RequestBody AddItemRequest addItemRequest){
-        Long userId = getCurrentAuthenticatedUserId();
+        String userId = getCurrentAuthenticatedUserId();
         CartResponse cartResponse = cartService.addProductToCart(userId, addItemRequest);
         return new ResponseEntity<>(cartResponse, HttpStatus.OK);
     }
@@ -50,15 +50,15 @@ public class CartController {
     @PutMapping("/update")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CartResponse> updateProductQuantityInCart(@Valid @RequestBody AddItemRequest updateItemRequest){
-        Long userId = getCurrentAuthenticatedUserId();
+        String userId = getCurrentAuthenticatedUserId();
         CartResponse cartResponse = cartService.updateProductQuantityInCart(userId, updateItemRequest);
         return ResponseEntity.ok(cartResponse);
     }
 
     @DeleteMapping("/remove/{productId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CartResponse> removeProductFromCart(@PathVariable("productId") Long productId){
-        Long userId = getCurrentAuthenticatedUserId();
+    public ResponseEntity<CartResponse> removeProductFromCart(@PathVariable("productId") String productId){
+        String userId = getCurrentAuthenticatedUserId();
         CartResponse cartResponse = cartService.removeProductFromCart(userId, productId);
         return ResponseEntity.ok(cartResponse);
     }
@@ -66,7 +66,7 @@ public class CartController {
     @DeleteMapping("/clear")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CartResponse> clearCart(){
-        Long userId = getCurrentAuthenticatedUserId();
+        String userId = getCurrentAuthenticatedUserId();
         CartResponse cartResponse = cartService.clearCart(userId);
         return ResponseEntity.ok(cartResponse);
     }

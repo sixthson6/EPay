@@ -42,24 +42,25 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Cart getCartByUser(Long userId) {
+    public Cart getCartByUser(String userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId.toString()));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         return cartRepository.findByUser(user)
                 .orElseGet(() -> {
-                    Cart newCart = Cart.builder().user(user).build();
+                    Cart newCart = new Cart();
+                    newCart.setUser(user);
                     return cartRepository.save(newCart);
                 });
     }
 
     @Override
     @Transactional
-    public CartResponse addProductToCart(Long userId, AddItemRequest addItemRequest) {
+    public CartResponse addProductToCart(String userId, AddItemRequest addItemRequest) {
         Cart cart = getCartByUser(userId);
 
         Product product = productRepository.findById(addItemRequest.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", addItemRequest.getProductId().toString()));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", addItemRequest.getProductId()));
 
         if (product.getStockQuantity() == 0) {
             throw new EcommerceAPIException(HttpStatus.BAD_REQUEST, "Product '" + product.getName() + "' is out of stock.");
@@ -82,11 +83,10 @@ public class CartServiceImpl implements CartService {
                 throw new EcommerceAPIException(HttpStatus.BAD_REQUEST,
                         "Not enough stock for product '" + product.getName() + "'. Available: " + product.getStockQuantity());
             }
-            CartItem newCartItem = CartItem.builder()
-                    .cart(cart)
-                    .product(product)
-                    .quantity(addItemRequest.getQuantity())
-                    .build();
+            CartItem newCartItem = new CartItem();
+            newCartItem.setCart(cart);
+            newCartItem.setProduct(product);
+            newCartItem.setQuantity(addItemRequest.getQuantity());
             cartItemRepository.save(newCartItem);
             cart.getCartItems().add(newCartItem);
         }
@@ -95,14 +95,14 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartResponse updateProductQuantityInCart(Long userId, AddItemRequest addItemRequest) {
+    public CartResponse updateProductQuantityInCart(String userId, AddItemRequest addItemRequest) {
         Cart cart = getCartByUser(userId);
 
         Product product = productRepository.findById(addItemRequest.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", addItemRequest.getProductId().toString()));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", addItemRequest.getProductId()));
 
         CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
-                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", addItemRequest.getProductId().toString()));
+                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", addItemRequest.getProductId()));
 
         int newQuantity = addItemRequest.getQuantity();
 
@@ -122,14 +122,14 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartResponse removeProductFromCart(Long userId, Long productId) {
+    public CartResponse removeProductFromCart(String userId, String productId) {
         Cart cart = getCartByUser(userId);
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId.toString()));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
 
         CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
-                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId.toString()));
+                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId));
 
         cartItemRepository.delete(cartItem);
         cart.getCartItems().remove(cartItem);
@@ -138,7 +138,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartResponse clearCart(Long userId) {
+    public CartResponse clearCart(String userId) {
         Cart cart = getCartByUser(userId);
         cartItemRepository.deleteAll(cart.getCartItems());
         cart.getCartItems().clear();
@@ -157,7 +157,7 @@ public class CartServiceImpl implements CartService {
                     itemResponse.setId(item.getId());
                     itemResponse.setProduct(productService.mapToDTO(item.getProduct()));
                     itemResponse.setQuantity(item.getQuantity());
-                    itemResponse.setSubtotal(item.getQuantity() * 10.0);
+                    itemResponse.setSubtotal(item.getQuantity() * item.getProduct().getPrice().doubleValue());
                     return itemResponse;
                 }).collect(Collectors.toList());
 
@@ -171,3 +171,4 @@ public class CartServiceImpl implements CartService {
         return cartResponse;
     }
 }
+
