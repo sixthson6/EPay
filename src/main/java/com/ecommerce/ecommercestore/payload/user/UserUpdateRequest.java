@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Email;
 public class UserUpdateRequest {
     private String firstName;
     private String lastName;
+    private String username;
     @Email(message = "Invalid email format")
     private String email;
 }

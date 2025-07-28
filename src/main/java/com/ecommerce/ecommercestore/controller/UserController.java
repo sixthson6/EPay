@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1/users")
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
 
     public UserController(UserService userService) {
         this.userService = userService;
@@ -34,14 +34,14 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @userService.getUserById(#id).getEmail() == authentication.name")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable("id") Long id){
+    public ResponseEntity<UserResponse> getUserById(@PathVariable("id") String id){
         UserResponse userResponse = userService.getUserById(id);
         return ResponseEntity.ok(userResponse);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @userService.getUserById(#id).getEmail() == authentication.name")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable("id") Long id,
+    public ResponseEntity<UserResponse> updateUser(@PathVariable("id") String id,
                                                    @Valid @RequestBody UserUpdateRequest userUpdateRequest){
         UserResponse updatedUser = userService.updateUser(id, userUpdateRequest);
         return ResponseEntity.ok(updatedUser);
@@ -49,7 +49,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @userService.getUserById(#id).getEmail() == authentication.name")
-    public ResponseEntity<String> deleteUser(@PathVariable("id") Long id){
+    public ResponseEntity<String> deleteUser(@PathVariable("id") String id){
         userService.deleteUser(id);
         return new ResponseEntity<>("User deleted successfully!", HttpStatus.OK);
     }

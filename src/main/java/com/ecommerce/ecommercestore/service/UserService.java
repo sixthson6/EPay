@@ -5,13 +5,11 @@ import com.ecommerce.ecommercestore.payload.user.UserResponse;
 import com.ecommerce.ecommercestore.payload.user.UserUpdateRequest;
 
 public interface UserService {
-    User createUser(User user);
-    UserResponse getUserById(Long userId);
-    User createAdminUser(User user);
+    void createUser(User user);
+    UserResponse getUserById(String userId);
+    void createAdminUser(User user);
     UserResponse getUserByEmail(String email);
-    UserResponse updateUser(Long userId, UserUpdateRequest userUpdateRequest);
-    void deleteUser(Long userId);
+    UserResponse updateUser(String userId, UserUpdateRequest userUpdateRequest);
+    void deleteUser(String userId);
     Boolean existsByEmail(String email);
-    UserResponse mapToDTO(User user);
-    User mapToEntity(UserResponse userResponse);
 }
