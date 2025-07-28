@@ -1,16 +1,18 @@
 package com.ecommerce.ecommercestore.service.impl;
 
-import com.ecommerce.ecommercestore.exception.EcommerceAPIException;
 import com.ecommerce.ecommercestore.exception.ResourceNotFoundException;
 import com.ecommerce.ecommercestore.model.Category;
-import com.ecommerce.ecommercestore.model.enums.CategoryName;
+import com.ecommerce.ecommercestore.model.Product;
 import com.ecommerce.ecommercestore.payload.category.CategoryRequest;
 import com.ecommerce.ecommercestore.payload.category.CategoryResponse;
 import com.ecommerce.ecommercestore.repository.CategoryRepository;
+import com.ecommerce.ecommercestore.repository.ProductRepository;
 import com.ecommerce.ecommercestore.service.CategoryService;
-import org.modelmapper.ModelMapper;
-import org.springframework.http.HttpStatus;
+import com.ecommerce.ecommercestore.service.ProductService;
+import com.ecommerce.ecommercestore.service.mapper.CategoryMapper;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,73 +21,61 @@ import java.util.stream.Collectors;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final ModelMapper modelMapper;
+    private final CategoryMapper categoryMapper;
+    private final ProductRepository productRepository;
+    private final ProductService productService;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository, ModelMapper modelMapper) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, CategoryMapper categoryMapper, ProductRepository productRepository, @Lazy ProductService productService) {
         this.categoryRepository = categoryRepository;
-        this.modelMapper = modelMapper;
+        this.categoryMapper = categoryMapper;
+        this.productRepository = productRepository;
+        this.productService = productService;
     }
 
     @Override
     public CategoryResponse createCategory(CategoryRequest categoryRequest) {
-        if (categoryRepository.findByName(categoryRequest.getName()).isPresent()) {
-            throw new EcommerceAPIException(HttpStatus.BAD_REQUEST, "Category with name '" + categoryRequest.getName() + "' already exists.");
-        }
-
-        Category category = Category.builder()
-                .name(categoryRequest.getName())
-                .description(categoryRequest.getDescription())
-                .build();
-        Category newCategory = categoryRepository.save(category);
-        return modelMapper.map(newCategory, CategoryResponse.class);
-    }
-
-    @Override
-    public CategoryResponse getCategoryById(Long categoryId) {
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", categoryId.toString()));
-        return modelMapper.map(category, CategoryResponse.class);
+        Category category = categoryMapper.toCategory(categoryRequest);
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toCategoryResponse(savedCategory);
     }
 
     @Override
     public List<CategoryResponse> getAllCategories() {
-        List<Category> categories = categoryRepository.findAll();
-        return categories.stream()
-                .map(category -> modelMapper.map(category, CategoryResponse.class))
+        return categoryRepository.findAll().stream()
+                .map(categoryMapper::toCategoryResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public CategoryResponse updateCategory(Long categoryId, CategoryRequest categoryRequest) {
+    public CategoryResponse getCategoryById(String categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", categoryId.toString()));
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", categoryId));
+        return categoryMapper.toCategoryResponse(category);
+    }
 
-        if (!category.getName().equals(categoryRequest.getName())) {
-            if (categoryRepository.findByName(categoryRequest.getName()).isPresent()) {
-                throw new EcommerceAPIException(HttpStatus.BAD_REQUEST, "Category with name '" + categoryRequest.getName() + "' already exists.");
-            }
-            category.setName(categoryRequest.getName());
+    @Override
+    public CategoryResponse updateCategory(String categoryId, CategoryRequest categoryRequest) {
+        Category existingCategory = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", categoryId));
+
+        existingCategory.setName(categoryRequest.getName());
+        existingCategory.setDescription(categoryRequest.getDescription());
+
+        Category updatedCategory = categoryRepository.save(existingCategory);
+        return categoryMapper.toCategoryResponse(updatedCategory);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCategory(String categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", categoryId));
+
+        List<Product> products = productRepository.findByCategory(category);
+        for(Product product : products){
+            productService.deleteProduct(product.getId());
         }
-        category.setDescription(categoryRequest.getDescription());
 
-        Category updatedCategory = categoryRepository.save(category);
-        return modelMapper.map(updatedCategory, CategoryResponse.class);
-    }
-
-    @Override
-    public void deleteCategory(Long categoryId) {
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", categoryId.toString()));
-        categoryRepository.delete(category);
-    }
-
-    @Override
-    public CategoryResponse mapToDTO(Category category) {
-        return modelMapper.map(category, CategoryResponse.class);
-    }
-
-    @Override
-    public Category mapToEntity(CategoryRequest categoryRequest) {
-        return modelMapper.map(categoryRequest, Category.class);
+        categoryRepository.deleteById(categoryId);
     }
 }

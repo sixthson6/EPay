@@ -5,10 +5,8 @@ import com.ecommerce.ecommercestore.payload.category.CategoryResponse;
 import com.ecommerce.ecommercestore.service.CategoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -21,37 +19,33 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest categoryRequest){
-        CategoryResponse categoryResponse = categoryService.createCategory(categoryRequest);
-        return new ResponseEntity<>(categoryResponse, HttpStatus.CREATED);
+    public ResponseEntity<CategoryResponse> createCategory(@RequestBody CategoryRequest categoryRequest) {
+        CategoryResponse createdCategory = categoryService.createCategory(categoryRequest);
+        return new ResponseEntity<>(createdCategory, HttpStatus.CREATED);
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponse>> getAllCategories(){
+    public ResponseEntity<List<CategoryResponse>> getAllCategories() {
         List<CategoryResponse> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categories);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable("id") Long id){
-        CategoryResponse categoryResponse = categoryService.getCategoryById(id);
-        return ResponseEntity.ok(categoryResponse);
+    public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable("id") String categoryId) {
+        CategoryResponse category = categoryService.getCategoryById(categoryId);
+        return ResponseEntity.ok(category);
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable("id") Long id,
-                                                           @Valid @RequestBody CategoryRequest categoryRequest){
-        CategoryResponse updatedCategory = categoryService.updateCategory(id, categoryRequest);
+    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable("id") String categoryId, @RequestBody CategoryRequest categoryRequest) {
+        CategoryResponse updatedCategory = categoryService.updateCategory(categoryId, categoryRequest);
         return ResponseEntity.ok(updatedCategory);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteCategory(@PathVariable("id") Long id){
-        categoryService.deleteCategory(id);
-        return new ResponseEntity<>("Category deleted successfully!", HttpStatus.OK);
+    public ResponseEntity<Void> deleteCategory(@PathVariable("id") String categoryId) {
+        categoryService.deleteCategory(categoryId);
+        return ResponseEntity.noContent().build();
     }
 }
