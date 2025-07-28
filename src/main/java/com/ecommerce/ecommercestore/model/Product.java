@@ -1,37 +1,30 @@
 package com.ecommerce.ecommercestore.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @Data
-@NoArgsConstructor
+@Document(collection = "products")
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-@Entity
-@Table(name = "products")
 public class Product {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
+    private String id;
     private String name;
-
-    @Column(columnDefinition = "TEXT")
     private String description;
-
-    @Column(nullable = false)
+    private BigDecimal price;
     private Integer stockQuantity;
-
-    private String imageUrl;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
+    private String brand;
     private Category category;
+    private String imageUrl;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private Map<String, Object> attributes;
 }
-

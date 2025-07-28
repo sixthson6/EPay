@@ -1,20 +1,18 @@
 package com.ecommerce.ecommercestore.payload.product;
 
-import com.ecommerce.ecommercestore.model.enums.CategoryName;
+import com.ecommerce.ecommercestore.model.Category;
 import com.ecommerce.ecommercestore.payload.category.CategoryResponse;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
+@RequiredArgsConstructor
 public class ProductResponse {
-    private Long id;
+    private String id;
     private String name;
     private String description;
+    private String brand;
     private Integer stockQuantity;
     private String imageUrl;
-    private CategoryName category;
-
-    public CategoryName setCategoryName(CategoryName category) {
-        this.category = category;
-        return this.category;
-    }
+    private Category category;
 }
